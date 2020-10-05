@@ -16,16 +16,25 @@ offTimes = table_ts_type.events_ts(events_type==31);
 % Compute timeframe of PTSH (-500stim+1000ms). timeframePSTH is a table
 % with two columns.
 timeframePSTH = [onTimes-preStim, offTimes+postStim];
-PSTH = zeros(length(timeframePSTH));
+% spikes_PSTH = zeros(1, 19); % preallocation of the spikes_PSTH wouldn't work for 
+% different sizes of arrays.
 
-for i = length(timeframePSTH) % idk man ik doe maar wat
-PSTH = PSTH; % heel nuttig ook deze line
-spikes
-
+for i = 1:10 % actually for length(timeframePSTH), but your computer will crash and matlab will never forget. Matlab will haunt you till the end of days. So don't do this or you'll regret it for the rest of your life.
+        spikes_PSTH = spikes_ts(1,[spikes_ts<timeframePSTH(i,2)]);
+        % Make a histogram of the spikes within the PSTH (in each 25ms bin). 
+        % It looks at the 500ms prestimulus to the 1000ms poststimulus 
+        % interval, in steps of 'timeBin', which is 25 ms. 
+        figure(i);
+        histogram(spikes_PSTH,[timeframePSTH(i,1):timeBin:timeframePSTH(i,2)]);
+        % Spice up the graph ~~*pretty pretty*~~ glam, ah, such wow
+        grid on;
+        xlabel('Time (microseconds)', 'FontSize', 12);
+        ylabel('Spike Count', 'FontSize', 12);
+        title('Histogram of Spikes per 25 ms time bin', 'FontSize', 14);
+        
+        % We probably have to use 'hold on' and 'hold off' to add different
+        % timeframePTSHs in one graph.
 end
-
-% Calculate the amount of spikes in each time bin. (prob not necessary?)
-% N = histcounts(spikes_ts,timeBin);
 
 
 

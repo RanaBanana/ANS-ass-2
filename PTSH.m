@@ -16,13 +16,12 @@ offTimes = table_ts_type.events_ts(events_type==31);
 % Compute timeframe of PTSH (-500stim+1000ms). timeframePSTH is a table
 % with two columns.
 timeframePSTH = [onTimes-preStim, offTimes+postStim];
-PSTH = zeros(length(timeframePSTH));
+PSTH = zeros(19);
 
-for i = length(timeframePSTH) % idk man ik doe maar wat
-PSTH = PSTH; % heel nuttig ook deze line
-spikes
-
+for i = 1: length(timeframePSTH) % idk man ik doe maar wat
+        PSTH(i,:) = spikes_ts(1,[spikes_ts<timeframePSTH(i,2)]);    
 end
 
 % Calculate the amount of spikes in each time bin. (prob not necessary?)
 % N = histcounts(spikes_ts,timeBin);
+

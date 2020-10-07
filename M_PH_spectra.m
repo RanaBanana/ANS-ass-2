@@ -106,6 +106,43 @@ legend('s1','s2','c')
 % time.
 %Phase: s1 changes in amplitude between -5 and +5. 
 
+%Spectra of the waves: All waves show sinuso?d behaviour or a variation of
+% it. Important to note is that the frequency of  c and s2 are much higher
+% that of s1, due to the frequency being at 50Hz instead of 5. 
+%FFT magnitude: The magnitude of FFT is as expected, and relatively clean.
+% however when zoomed in to their respective peaks the peaks appear wider.
+% s1 shows peaks at -50/50, s2 is flat line at 0, c shows peaks at -5/5.
+%Phase: s2 and c show an inverted wave of eachother but similar in other
+% regards. s1 shows a different pattern and inverses itself between -5/5
+% Fs = 1000; 
+% T_max = 2; 
+% nfft = 1024;
+
+%Spectra of the waves: Incredibly dense spectrum is visible. Still follow 
+% the same patterns as stated above. all run at a magnitude of -1/1
+%FFT magnitude: s1 has a higher FFT magnitude in comparison to s2/c and
+% peaks between 5 and 10Hz. s2/c peak at -40/55. 
+%Phase: phase of s1 rises slowly when freq goes more towards positive, 
+% however nearing 0 it rises more quickly. For s2 it follows the same slow 
+% ascending pattern, only there is a single osscilating motion when
+% reaching -50Hz. The opposite is true for c, where it follows a downward
+% "escalator" motion from -50Hz.
+% Fs = 1000; 
+% T_max = 10; 
+% nfft = 64;
+
+%Spectra of the waves: No difference as the one directly above. As the they
+% run the same Hz and Fs
+%FFT magnitude: Amplitude of s2 and c peak both at -50/50. s1 peaks at -5/5
+% Hz.
+%Phase: c Shows a more drawn-out "escalator" motion from -50Hz to 50hz now.
+% The same goes for s2, but now and inverse "escalator" motion. s1 is 
+% relatively stable without much change until it reaches -5 to 5Hz, where 
+% rapid ascension is gone through, before gradual descent, where rapid
+% ascension happens at around 5Hz.
+% Fs = 1000; 
+% T_max = 10; 
+% nfft = 1024;
 
 
 

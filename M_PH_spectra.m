@@ -77,7 +77,34 @@ legend('s1','s2','c')
 % T_max = 10; 
 % nfft = 1024;
 
+% Fs = 150; 
+% T_max = 10; 
+% nfft = 64;
+%Spectra of the waves: All signals are shown as waves. However, detail of
+% all waves is lost in 10 second timeframe.
+%FFT magnitude: s1 has a magnitude around +5 and -5, s2 and s3 have magnitudes
+% at -50 and +50 (both as expected). There is leakage (because of low nfft)
+%Phase: s1 and s2 change in amplitude between -5 and +5. s2 and c change at 50Hz.
 
+% Fs = 150; 
+% T_max = 10;
+% nfft = 1024;
+%Spectra of the waves: All signals are shown as waves. However, detail of
+% all waves is lost in 10 second timeframe.
+%FFT magnitude: s1 has a magnitude around +5 and -5, s2 and s3 have magnitudes
+% at -50 and +50 (both as expected). Little leakage because of long
+% recording time.
+%Phase: s1 and s2 change in amplitude between -5 and +5. s2 and c change at 50Hz.
+
+% Fs = 1000; 
+% T_max = 0.1; 
+% nfft = 1024;
+%Spectra of the waves: All signals are shown as waves (as a result of the
+% high Fs)
+%FFT magnitude: s1 has a magnitude around +5 and -5, s2 and s3 have magnitudes
+% at -50 and +50 (both as expected). Leakage due to short recording
+% time.
+%Phase: s1 changes in amplitude between -5 and +5. 
 
 
 

@@ -144,5 +144,33 @@ legend('s1','s2','c')
 % T_max = 10; 
 % nfft = 1024;
 
+%% Spectograms and filtering
+% Set Fs=150; nfft=1024; T_max=10;
+% Compute and display the spectrograms for x1,x2,x3 
+t=0:1/Fs:2; % 2 secs @150Hz sample rate
+
+% x1
+
+% x2
+
+% x3 = [s1,s2] goes from s1 with freq 5 to s2 with freq 50
+y=chirp(t,5,1,50,'q'); % Start @ 5Hz, cross 50Hz at t=1sec
+[s,F,T,P]=spectrogram(x3,128,120,128,1e3);% Computes the spectrogram of x3
+
+subplot(2,1,1)
+plot(t,y)
+xlabel('Time (s)')
+title('Quadratic chirp')
+subplot(2,1,2);
+surf(T,F,10*log(abs(P)), 'EdgeColor', 'none')
+axis xy; axis tight; colormap(jet); view(0,90);
+xlabel('Time (s)');
+ylabel('Frequency(Hz)');
+title('Quadratic Chirp: start at 5 Hz and cross 50Hz at t=1sec')
+
+%% Build a low pass filter in the frequency domain with a cutoff frequency of
+%5.1 hz and one with 20Hz. 
+
+
 
 

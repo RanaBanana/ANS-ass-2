@@ -13,28 +13,61 @@ postStim = 1000000; % time after stimulus offset in microseconds
 onTimes = table_ts_type.events_ts(events_type==1);
 offTimes = table_ts_type.events_ts(events_type==31);
 
-% Compute timeframe of PTSH (-500stim+1000ms). timeframePSTH is a table
-% with two columns.
-timeframePSTH = [onTimes-preStim, offTimes+postStim];
-% spikes_PSTH = zeros(1, 19); % preallocation of the spikes_PSTH wouldn't work for 
-% different sizes of arrays.
-
-for i = 1:10 % actually for length(timeframePSTH), but your computer will crash and matlab will never forget. Matlab will haunt you till the end of days. So don't do this or you'll regret it for the rest of your life.
-        spikes_PSTH = spikes_ts(1,[spikes_ts<timeframePSTH(i,2)]);
-        % Make a histogram of the spikes within the PSTH (in each 25ms bin). 
-        % It looks at the 500ms prestimulus to the 1000ms poststimulus 
-        % interval, in steps of 'timeBin', which is 25 ms. 
-        figure(i);
-        histogram(spikes_PSTH,[timeframePSTH(i,1):timeBin:timeframePSTH(i,2)]);
-        % Spice up the graph ~~*pretty pretty*~~ glam, ah, such wow
-        grid on;
-        xlabel('Time (microseconds)', 'FontSize', 12);
-        ylabel('Spike Count', 'FontSize', 12);
-        title('Histogram of Spikes per 25 ms time bin', 'FontSize', 14);
-        
-        % We probably have to use 'hold on' and 'hold off' to add different
-        % timeframePTSHs in one graph.
+% Iterate over length of all onset stimulus points (offset could also be
+% done but less intuitive)
+for i = 1:length(onTimes) 
+    % We use find() to acquire all relevant timepoints on the dataset that are inbetween
+    % the onset timing - 500 and offset timing + 1000. We then assign it to
+    % a variable called hit.
+    hit = find(spikes_ts >= (onTimes(i) - preStim) & spikes_ts <= (onTimes(i) + postStim));
+    % we assign a temporary value for the spikestiming - onsettiming 
+    % (REMOVE THIS COMMENT AT THE END - we do this so we can get a general
+    % timepoint each spike is measured *relative!* to the onset of the
+    % stimulus, it gives a handy way to plot it later I hope)
+    spikes_on_time = spikes_ts(hit) - onTimes(i);
+    % has all timepoints per measures spike minus corresponding onset of
+    % stimulus. The value that spikes_on_time get is also used to show the
+    % length needed so we dont have to create alternative loops
+    % (REMOVE THIS COMMENT AT THE END - HOLY SHIT THIS IS UGLY. It works
+    % but we assign a big fucking chunky disaster of a method, as PSTH_time
+    % changes every fucking time we have a different spikes/i so it's omega
+    % inefficiënt. But I'm too braindead to fix this now, remind me when we
+    % have time later or maybe one of you sees a good solution, for now
+    % bear with this integrity violating construct pl0x 8-)).
+    PSTH_time(i, 1:length(spikes_on_time)) = spikes_on_time;
 end
+
+% Easy way to change our microseconds to milliseconds.
+PSTH_time = PSTH_time / 1000;
+% We do this so we can get rid of the zeros, otherwise it fucks our whole
+% graph because it will count the zeros as hits (this is a result of the
+% moral corruptness mentioned above, it assigns 0's when it's filling in
+% unneccesary space :'). so we fix it with a bandaid as shown below.
+remove_zero = PSTH_time > 0;
+% Dumb name but we use to create a vector of 50 to 100 with so many fucking
+% steps it gets high enough in our histogram to make the orange bar. I
+% wanted it in and got stubborn to show where the stimulus duration was
+% present. It's ugly now but nothing crying cant fix
+testing = (50:0.08:100);
+
+% All the outward stuff to make the histogram, first half stolen off
+% Eline's code. Rest is self explanatory except for hold on/off maybe. We
+% use it to be able to push two plots on top of eachother, they don't like
+% eachother I'm pretty sure but using the hold on cheat code gave them no
+% choice. If they start fighting blame Matlab please.
+figure
+histogram(PSTH_time(remove_zero), 80)
+xlabel('Time (milliseconds)', 'FontSize', 12);
+ylabel('Spike Count', 'FontSize', 12);
+axis tight
+title('Spike frequency per 25 ms time bin', 'FontSize', 14);
+hold on
+histogram(testing, 1)
+hold off
+% To be honest not sure why the legend function works as this. It's
+% strangely fucking neat it assigns the appropriate colors to the calls.
+% Kinda cool
+legend('Spikes per timebin', 'timeframe of stimulus');
 
 
 

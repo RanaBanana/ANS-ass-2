@@ -39,11 +39,17 @@ end
 
 % Easy way to change our microseconds to milliseconds.
 PSTH_time = PSTH_time / 1000;
+
 % We do this so we can get rid of the zeros, otherwise it fucks our whole
 % graph because it will count the zeros as hits (this is a result of the
 % moral corruptness mentioned above, it assigns 0's when it's filling in
 % unneccesary space :'). so we fix it with a bandaid as shown below.
 remove_zero = PSTH_time > 0;
+% IMPORTANT NOTE: yo Nick your bandaid fucking sucks. Ik zag net op
+% whatsapp dat de frequency count 300 verschilt met en zonder filter. Not
+% sure how maar maybe ramt hij ontzettend kleine getallen bij 0 er ook uit.
+% I'll take a look at it tomorrow
+
 % Dumb name but we use to create a vector of 50 to 100 with so many fucking
 % steps it gets high enough in our histogram to make the orange bar. I
 % wanted it in and got stubborn to show where the stimulus duration was
@@ -68,7 +74,6 @@ hold off
 % strangely fucking neat it assigns the appropriate colors to the calls.
 % Kinda cool
 legend('Spikes per timebin', 'timeframe of stimulus');
-
 
 
 

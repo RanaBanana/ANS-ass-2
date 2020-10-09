@@ -75,6 +75,41 @@ hold off
 % Kinda cool
 legend('Spikes per timebin', 'timeframe of stimulus');
 
+%% Excercise 2
+% Evaluate whether spiking activity during stimulus presentation period (the period
+% from stimulus onset to 500 ms afterwards) is significantly different from baseline
+% (defined as the activity in the 500 ms preceding stimulus onset). Is there a significant
+% response?
+LFP = [lfp_data ; lfp_ts];
+for i = 1:length(events_ts)
+    v = [min(abs(lfp_ts- events_ts(i)))];
+end
+%Make a vector with 0's and 1's, to match the timestamps for lfp_ts and
+%events_ts
+
+%Stimulus presentation
+
+
+%Baseline
+
+
+%% Excercise 3
+% Compute and plot the LFP power spectrum (using the pwelch function) during both
+% baseline (500 ms before stimulus onset) and stimulus presentation (onset-offset)
+% Take care in computing the power spectrum using parameters
+% appropriate to the sampling frequency and duration of the signal. Also compute a plot a
+% relative power spectrum, defined as relative power change (per frequency bin) between
+% baseline and presentation periods. Which (if any) LFP frequency is significantly
+% modulated by stimulus presentation? What is the origin of the sharp peaks in the spectra?
+
+LFP = [lfp_data ; lfp_ts];
+min(abs(lfp_ts- events_ts))
+%Stimulus presentation
+
+
+%Baseline
+
+
 
 
 %% Excercise 4

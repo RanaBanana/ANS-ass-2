@@ -98,13 +98,29 @@ for i = 1:length(onTimes)
     %stimulus presentation
     hit_stm_pres = find(spikes_ts >= onTimes(i) & spikes_ts <= (onTimes(i) + postStim));
     
-    spikes_on_time = spikes_ts(hit_baseline) - onTimes(i);
-    baseline(i, 1:length(spikes_on_time)) = spikes_on_time;
+    % Create vectors containing the spiketimes in all baseline (-500 to
+    % 0ms) and all stimulus (0 to 500) timewindow
+    baseline(i, 1:length(spikes_on_time_bas)) = spikes_on_time_bas;
+    stimulus(i, 1:length(spikes_on_time_stm)) = spikes_on_time_stm;
     
 end
 
-remove_zeros = baseline ~=0
+% Convert timestamps in both timewindows to 1s and 0s in order to count the
+% different spikes. (This does not remove the 0s!)
+baseline_remove_zeros = baseline ~=0;
+stimulus_remove_zeros = stimulus ~=0;
 
+% Calculate the #spikes for each timewindow in all baseline and stimulus
+% timewindow. 
+% !!!!!! This can probably be done in a different (quicker way), same
+% for the step above.
+baseline_small_sum = sum(baseline_remove_zeros,2);
+stimulus_small_sum = sum(stimulus_remove_zeros,2);
+
+% Calculate the average #spikes in the baseline and in the stimulus
+% timewindow.
+baseline_avg = mean(baseline_small_sum); % 0.1749
+stimulus_avg = mean(stimulus_small_sum); % 6.0566
 
 
 %% Excercise 3

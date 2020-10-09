@@ -77,22 +77,34 @@ hold off
 % Kinda cool
 legend('Spikes per timebin', 'timeframe of stimulus');
 
-%% Excercise 2
+%% Exercise 2
 % Evaluate whether spiking activity during stimulus presentation period (the period
 % from stimulus onset to 500 ms afterwards) is significantly different from baseline
 % (defined as the activity in the 500 ms preceding stimulus onset). Is there a significant
 % response?
-LFP = [lfp_data ; lfp_ts];
-for i = 1:length(events_ts)
-    v = [min(abs(lfp_ts- events_ts(i)))];
+
+%These are both the same value, so to make the code more efficient it is
+%possible to make these the same variable.
+preStim = 500000; % time before stimulus onset in microseconds
+postStim = 500000; %time after stimulus onset in microseconds
+
+for i = 1:length(onTimes) 
+    % We use find() to acquire all relevant timepoints on the dataset that are inbetween
+    % the onset timing - 500 and onset timing + 500. We then assign it to
+    % a variable called hit.
+    hit = find(spikes_ts >= (onTimes(i) - preStim) & spikes_ts <= (onTimes(i) + postStim));
+    %Baseline
+    hit_baseline = find(spikes_ts <= onTimes(i) & spikes_ts >= (onTimes(i) - preStim));
+    %stimulus presentation
+    hit_stm_pres = find(spikes_ts >= onTimes(i) & spikes_ts <= (onTimes(i) + postStim));
+    
+    spikes_on_time = spikes_ts(hit_baseline) - onTimes(i);
+    baseline(i, 1:length(spikes_on_time)) = spikes_on_time;
+    
 end
-%Make a vector with 0's and 1's, to match the timestamps for lfp_ts and
-%events_ts
 
-%Stimulus presentation
+remove_zeros = baseline ~=0
 
-
-%Baseline
 
 
 %% Excercise 3

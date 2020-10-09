@@ -1,3 +1,5 @@
+%Assignment 2
+%% Excercise 1
 % Load assignment2_data.mat
 
 % Combine the events_ts and events_type to mark when the stimulus was

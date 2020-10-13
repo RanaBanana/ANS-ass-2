@@ -225,7 +225,74 @@ end
 % Baseline window
 % is always 500 ms before stimulus onset.
 
+%% exercise 5
 
+%lmao fml
+clear all;
+close all;
+load assignment2_data.mat;
+
+% randomshit gestolen van slides/code/google/wanhoop
+Fs=1000;
+N = 20;
+x = lfp_data; %deze nog wel zelfbedacht :')
+t = 0:length(x)-1; %deze ook want ik ben te fragiel om 1:length(x) te doen.
+
+% Compute fourier transform
+nfft = length(lfp_data); % Ab
+f=(-nfft/2:nfft/2-1)*Fs/nfft; %ra 
+f_s= fftshift(f); %ca
+X = fft(x, nfft); %da
+%bruh
+
+%Hier toen we 3x een filter voor de gewenste ranges
+filt_2_6 = zeros(size(X)); % allocaten ruimte voor size van X
+a=find(abs(f_s)>= 2 & abs(f_s) <= 6); % zoeken naar alle relevante waarden van f_s (freq)
+filt_2_6(a) = 1; % if present we adjust the values to 1 for later (dan heb je dus een hit van die freq range)
+
+filt_10_20 = zeros(size(X)); % idem
+b=find(abs(f_s)>= 10 & abs(f_s) <= 20); %diedum
+filt_10_20(b) = 1; %riedum
+
+filt_30_40 = zeros(size(X)); %smiedum
+c=find(abs(f_s)>= 30 & abs(f_s) <= 40); %geenrijmmeerdum
+filt_30_40(c) = 1; % tsja, de comments zijn mager
+
+X_f1 = X.*filt_2_6; %magical shit van onze filter voorwaarden(?) met onze x punten
+X_ff1 =ifft(X_f1, nfft); %inverse fast fourier transform (ik pretendeer later wel te weten wat het is) over de 2 waarden
+X_f2 = X.*filt_10_20;
+X_ff2 =ifft(X_f2, nfft);
+X_f3 = X.*filt_30_40;
+X_ff3 =ifft(X_f3, nfft);
+
+%plot tijd en kijken of poging nfft^length(lfp_data) wel werkt :') 
+figure;
+figfor2_6 = subplot(311);
+plot(t(1:nfft), X_ff1);
+ylim(figfor2_6, [-5000 5000]);
+ylabel('mV');
+xlabel('datapoints');
+title('LFP 2 to 6 Hz filtered');
+
+figfor10_20 = subplot(312);
+plot(t(1:nfft), X_ff2);
+ylim(figfor10_20, [-5000 5000]);
+ylabel('mV');
+xlabel('datapoints');
+title('LFP 10 to 20 Hz filtered');
+
+figfor30_40 = subplot(313);
+plot(t(1:nfft), X_ff3);
+ylim(figfor30_40, [-2000 2000]);
+ylabel('mV');
+xlabel('datapoints');
+title('LFP 30 to 40 Hz filtered');
+% courtesy of Rana https://gyazo.com/806acc8c7477862103ae523c9845507b
+
+
+
+% Just kidding it was okay, it just feel wrong to have done it with just
+% restructering copied code from slides but hey. 
 
 
 

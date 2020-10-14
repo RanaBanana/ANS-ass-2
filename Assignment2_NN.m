@@ -129,7 +129,7 @@ stimulus_avg = mean(stimulus_small_sum); % 6.0566
 % Compute and plot the LFP power spectrum (using the pwelch function) during both
 % baseline (500 ms before stimulus onset) and stimulus presentation (onset-offset)
 % Take care in computing the power spectrum using parameters
-% appropriate to the sampling frequency and duration of the signal. Also compute a plot a
+% appropriate to the sampling frequency (1 kHz) and duration of the signal. Also compute a plot a
 % relative power spectrum, defined as relative power change (per frequency bin) between
 % baseline and presentation periods. Which (if any) LFP frequency is significantly
 % modulated by stimulus presentation? What is the origin of the sharp peaks in the spectra?
@@ -146,32 +146,36 @@ offTimes = events.events_ts(events_type==31);
 %Create a NAN-matrix (preallocating)
 lfp_stim = NaN;
 
-for i = 1:100 %length(events_ts)
+for i = 1:1000 %length(onTimes)
     [~,stim_begin_idx] = min(abs(lfp_ts - onTimes(i)));
     [~,stim_end_idx] = min(abs(lfp_ts - offTimes(i)));
     lfp_stim = lfp_data(stim_begin_idx:stim_end_idx);    
 end
 
-[stim_P_welch] = pwelch(lfp_stim);
+[stim_P_welch, stim_F_welch] = pwelch(lfp_stim);
 
 lfp_bas = NaN;
 %Baseline
-for j = 1:100 %length()
+for j = 1:1000 %length(onTimes)
     [~,bas_begin_idx] = min(abs(lfp_ts - (onTimes(j)-500000)));
     [~,bas_end_idx] = min(abs(lfp_ts - onTimes(j)));
     lfp_bas = lfp_data(bas_begin_idx:bas_end_idx); 
 end
 
-[bas_P_welch] = pwelch(lfp_bas);
+[bas_P_welch, bas_F_welch] = pwelch(lfp_bas);
 
-%Plotting stimulus presentation and baseline 
+%Plotting stimulus presentation and baseline welch estimations
 subplot(211)
-plot(stim_P_welch)
-%Title("Stimulus Presentation window")
+plot(stim_F_welch,stim_P_welch)
+ylabel('Frequency');
+xlabel('Time');
+title("Welch Estimation during stimulus presentation")
 
 subplot(212)
-plot(bas_P_welch)
-
+plot(bas_F_welch, bas_P_welch)
+ylabel('Frequency');
+xlabel('Time');
+title("Welch Estimation during baseline")
 
 
 %% Exercise 4

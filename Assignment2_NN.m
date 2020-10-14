@@ -142,20 +142,36 @@ events = table(events_ts, events_type);
 onTimes = events.events_ts(events_type==1);
 offTimes = events.events_ts(events_type==31);
 
-LFP_signal = table(lfp_ts, lfp_data);
-
-% min(abs(lfp_ts - event_ts(i)))
-
 %Stimulus presentation
-for i = 1:100 %length()
-    closest_corresponding_time = min(abs(lfp_ts - event_ts(i)));
-    stim_pres_window = find(onTimes == closest_corresponding_time & offTimes == );
+%Create a NAN-matrix (preallocating)
+lfp_stim = NaN;
+
+for i = 1:100 %length(events_ts)
+    [~,stim_begin_idx] = min(abs(lfp_ts - onTimes(i)));
+    [~,stim_end_idx] = min(abs(lfp_ts - offTimes(i)));
+    lfp_stim = lfp_data(stim_begin_idx:stim_end_idx);    
 end
 
+[stim_P_welch] = pwelch(lfp_stim);
+
+lfp_bas = NaN;
 %Baseline
 for j = 1:100 %length()
-    
+    [~,bas_begin_idx] = min(abs(lfp_ts - (onTimes(j)-500000)));
+    [~,bas_end_idx] = min(abs(lfp_ts - onTimes(j)));
+    lfp_bas = lfp_data(bas_begin_idx:bas_end_idx); 
 end
+
+[bas_P_welch] = pwelch(lfp_bas);
+
+%Plotting stimulus presentation and baseline 
+subplot(211)
+plot(stim_P_welch)
+%Title("Stimulus Presentation window")
+
+subplot(212)
+plot(bas_P_welch)
+
 
 
 %% Exercise 4

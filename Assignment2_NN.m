@@ -179,87 +179,75 @@ title("Welch Estimation during baseline")
 
 
 %% Exercise 4
-% Compute and plot the spike-triggered LFP signal (i.e. the average LFP value of the time signal
-% occurring around the occurrence of an action potential) in the [-250, 250] ms window
-% around the spike times. Do this separately for spikes in the baseline window and for
-% spikes in the stimulus presentation window. What do you notice? Is there any difference
-% in the LFP between baseline and stimulus presentation?
+% clear all
+% load('assignment2_data.mat')
 
-% Variable definitions
-window_spike = 250000;
 % Combine the events_ts and events_type to mark when the stimulus was
 % presented.
 events_table = table(events_ts, events_type);
-% Extract values from table corresponding to the on- and offset
+
+% Extract values from table corresponding to the on- and offset 
 onTimes = events_table.events_ts(events_type==1);
 offTimes = events_table.events_ts(events_type==31);
 
-% lfp_data is expressed in uV.
-LFP_table = table(lfp_data, lfp_ts);
-%Test on first 12000 columns of LFP (used as control):
-%small_data = LFP_table(:,1:12000);
-%plot(small_data(2,:),small_data(1,:));
+% Set of variables. Set to microseconds to match data.
+timeBin = 25000; % time bin in microseconds
+ms_500 = 500000; % 500 ms in microseconds. Used as preStim and as stimulus presentation length. 
+postStim = 1000000; % time after stimulus offset in microseconds
+window_spike = 250000; % spike window -250 to 250ms around spikes
 
-% Plotting the whole LFP signal; WARNING: ONLY RUN ON FAST COMPUTER
-% plot_LFP = plot(LFP_table(2,:), LFP_table(1,:))
-
-
-% New:
-
-% Compute the 250 ms time window around the spike times (in columns).
-window250_spikes = [spikes_ts-window_spike; spikes_ts+window_spike]';
-
-% Preallocate the window250_lfp and the timewindow_lfp (both have two
-% columns)
-window250_lfp = zeros(length(window250_spikes),2);
-timewindow_lfp = zeros(length(window250_spikes),2);
-
-position_time_lfp = zeros(length(window250_spikes), []);
-
-% Create a transition time window which can shift the window250_spikes to
-% the corresponding time window in the lfp data.
-for i= 1:100 %length(window250_spikes)
-    % Using abs() and min(), it finds the difference of the number that's 
-    % closest to window250_spikes(1,i). 
-    % Iterate through every column of the -250ms timestamps
-    % And create a new variable (window250_lfp) containing these
-    % timeshifts (in columns)
-    window250_lfp(i,1) = min(abs(lfp_ts-window250_spikes(i,1)));
-    window250_lfp(i,2) = min(abs(lfp_ts-window250_spikes(i,2)));
+% Categorize the spikes in baseline and stimulus presentation window.
+    % Preallocate variables
+    base_spikes_ts = [];
+    base_spikes = [];
+    stim_spikes_ts = [];
+    stim_spikes = [];
     
-    % Create an lfp timewindow of -250ms to +250ms around spikes
-    timewindow_lfp(i,1) = window250_spikes(i,1)+window250_lfp(i,1);
-    timewindow_lfp(i,2) = window250_spikes(i,2)+window250_lfp(i,2);
+for i = 1:1000 % length(onTimes) 
+    % 1. Baseline (-500 to 0 ms):
+    % Find spikes_idx and corresponding ts in every baseline
+    base_spikes_idx = find(spikes_ts>=(onTimes(i)-ms_500)& spikes_ts < onTimes(i));
+    base_spikes_ts = spikes_ts(base_spikes_idx);
+    base_spikes = horzcat(base_spikes, base_spikes_ts);
+    % base_spikes_ts(i,:) = spikes_ts(base_spikes_idx_beg:base_spikes_idx_end);
+    % spikes_table(i,:) = base_spikes_ts;
     
-    position_time_lfp(i,1) = find(LFP_table.lfp_ts == timewindow_lfp(i,1));
-    position_time_lfp(i,2) = find(LFP_table.lfp_ts == timewindow_lfp(i,2));
+    % 2. Stimulus presentation window (0 to 500ms):
+    % Find spikes_idx and corresponding ts in every stim presentation
+    stim_spikes_idx = find(spikes_ts>=onTimes(i)& spikes_ts < offTimes(i));
+    stim_spikes_ts = spikes_ts(stim_spikes_idx);
+    stim_spikes = horzcat(stim_spikes, stim_spikes_ts);
 end
 
+% Find the corresponding spike windows (-250 to 250ms around each spike):
+spikes_window = [spikes_ts-window_spike'; spikes_ts+window_spike'];
 
-
-% First for loop: iterates through the different timewindows (of -250 and
-% 250 ms)
-for j=1:100
-    % Find the positions corresponding to the values of the -250 and
-    % 250 ms time window.
-    tmin_pos = find(LFP_table.lfp_ts==timewindow_lfp(j,1));
-    tmax_pos = find(LFP_table.lfp_ts==timewindow_lfp(j,2));
-    %Preallocate Volt. This way, it is emptied during every iteration of j.
-    Volt = [];
-    % Second for loop: iterates through the values of lfp_ts and checks if
-    % they fall within the j-th timewindow. 
-    % Iteration from tmin_pos to tmax_pos.
-    for i= tmin_pos:tmax_pos 
-        if LFP_table.lfp_ts(i)>=timewindow_lfp(j,1) && LFP_table.lfp_ts(i)<=timewindow_lfp(j,2)
-            % Create variable containing all Volt values within the time
-            % window. 
-            Volt(1,i)= LFP_table.lfp_data(lfp_ts==LFP_table.lfp_ts(i));
-        end
-    end
-    % Create variable containing the means of each row 
-    Volt_means(j) = mean(Volt(:,1));
+% Find the corresponding lfp_ts values for each spike window in baseline.
+    % Preallocate variables:
+    base_lfp = [];
+    stim_lfp = [];
+    
+for j = 1: length(base_spikes)
+    [~, idx_beg] = min(abs(lfp_ts-(base_spikes(j)-window_spike)));
+    [~, idx_end] = min(abs(lfp_ts-(base_spikes(j)+window_spike)));
+    base_lfp(j,:) = lfp_data(idx_beg:idx_end); 
 end
 
+for h = 1: length(stim_spikes)
+    [~, idx_beg] = min(abs(lfp_ts-(stim_spikes(h)-window_spike)));
+    [~, idx_end] = min(abs(lfp_ts-(stim_spikes(h)+window_spike)));
+    stim_lfp(h,:) = lfp_data(idx_beg:idx_end); 
+end
+
+% plotting lfp_base_mean:
+subplot(2,1,1)
+lfp_base_mean = mean(base_lfp, 1);
+plot(lfp_base_mean);
+
+% plotting lfp_stim_mean:
+subplot(2,1,2)
+lfp_stim_mean = mean(stim_lfp, 1);
+plot(lfp_stim_mean);
 
 %% exercise 5
 

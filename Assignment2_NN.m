@@ -143,15 +143,34 @@ onTimes = events.events_ts(events_type==1);
 offTimes = events.events_ts(events_type==31);
 
 %Stimulus presentation
+% %Create a NAN-matrix (preallocating)
+% lfp_stim = zeros(500,300);
+% 
+% for i = 1:300 %length(onTimes)
+%     [~,stim_begin_idx] = min(abs(lfp_ts - onTimes(i)));
+%     [~,stim_end_idx] = min(abs(lfp_ts - offTimes(i)));
+%     lfp_stim((1:(stim_end_idx-stim_begin_idx+1)),i) = lfp_data(stim_begin_idx:stim_end_idx); 
+% end
+% 
+% mean_lfp_stim = mean(lfp_stim,1);
+% 
+% [stim_P_welch, stim_F_welch] = pwelch(lfp_stim,[],[],[], 1000);
+
+%Stimulus presentation
 %Create a NAN-matrix (preallocating)
 lfp_stim = NaN;
 
 for i = 1:300 %length(onTimes)
     [~,stim_begin_idx] = min(abs(lfp_ts - onTimes(i)));
     [~,stim_end_idx] = min(abs(lfp_ts - offTimes(i)));
+    %You take the mean over one trial, which is not what you're supposed to
+    %be doing, right? 
     lfp_stim(1,i) = mean(lfp_data(stim_begin_idx:stim_end_idx)); 
 end
+%Perhaps take the pwelch in the for-loop, put every P_welch value in an 
+%array, and average it after the for-loop
 
+%f = (-Fs/2, Fs/2, nfft)
 [stim_P_welch, stim_F_welch] = pwelch(lfp_stim);
 
 lfp_bas = NaN;
@@ -178,10 +197,11 @@ xlabel('Normalised Frequency (x pi)');
 title("Welch Estimation during baseline")
 
 subplot(313)
-plot((stim_F_welch/pi),(stim_P_welch-bas_P_welch))
+plot((stim_F_welch/pi),(stim_P_welch./bas_P_welch))
 ylabel('Power');
 xlabel('Normalised Frequency (x pi)');
 title("Welch Estimation for the relative power change")
+
 
 %% Exercise 4
 % clear all

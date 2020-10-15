@@ -138,69 +138,70 @@ clear all;
 load('assignment2_data.mat');
 
 %Variable definitions
+
+%sampling frequency
+Fs = 1000;
+%Creating vectors with the timestamps during which the stimulus was
+%presented (both on and off)
 events = table(events_ts, events_type);
 onTimes = events.events_ts(events_type==1);
 offTimes = events.events_ts(events_type==31);
 
-%Stimulus presentation
-% %Create a NAN-matrix (preallocating)
-% lfp_stim = zeros(500,300);
-% 
-% for i = 1:300 %length(onTimes)
-%     [~,stim_begin_idx] = min(abs(lfp_ts - onTimes(i)));
-%     [~,stim_end_idx] = min(abs(lfp_ts - offTimes(i)));
-%     lfp_stim((1:(stim_end_idx-stim_begin_idx+1)),i) = lfp_data(stim_begin_idx:stim_end_idx); 
-% end
-% 
-% mean_lfp_stim = mean(lfp_stim,1);
-% 
-% [stim_P_welch, stim_F_welch] = pwelch(lfp_stim,[],[],[], 1000);
+%LFP signal during stimulus presentation
+%Create a matrix(preallocating)
+lfp_stim = zeros(length(onTimes),500);
 
-%Stimulus presentation
-%Create a NAN-matrix (preallocating)
-lfp_stim = NaN;
-
-for i = 1:300 %length(onTimes)
+for i = 1:length(onTimes)
     [~,stim_begin_idx] = min(abs(lfp_ts - onTimes(i)));
     [~,stim_end_idx] = min(abs(lfp_ts - offTimes(i)));
-    %You take the mean over one trial, which is not what you're supposed to
-    %be doing, right? 
-    lfp_stim(1,i) = mean(lfp_data(stim_begin_idx:stim_end_idx)); 
+    lfp_stim(i,(1:(stim_end_idx-stim_begin_idx+1))) = lfp_data(stim_begin_idx:stim_end_idx); 
 end
+
+%If this all doesn't work:
 %Perhaps take the pwelch in the for-loop, put every P_welch value in an 
-%array, and average it after the for-loop
+%array, and average it after the for-loop.
 
+mean_lfp_stim = mean(lfp_stim,1);
 %f = (-Fs/2, Fs/2, nfft)
-[stim_P_welch, stim_F_welch] = pwelch(lfp_stim);
+%nfft_stim = length(mean_lfp_stim);
+%f_stim = linspace(-Fs/2, Fs/2, nfft_stim);
+[stim_P_welch, stim_F_welch] = pwelch(mean_lfp_stim,200,100,1000, Fs);
+ 
+%LFP signal during baseline
+%Create a matrix(preallocating)
+lfp_bas = zeros(length(onTimes),500);
 
-lfp_bas = NaN;
-%Baseline
-for j = 1:300 %length(onTimes)
+for j = 1:length(onTimes)
     [~,bas_begin_idx] = min(abs(lfp_ts - (onTimes(j)-500000)));
     [~,bas_end_idx] = min(abs(lfp_ts - onTimes(j)));
-    lfp_bas(1,j) = mean(lfp_data(bas_begin_idx:bas_end_idx)); 
+    lfp_bas(j,(1:(bas_end_idx-bas_begin_idx+1))) = lfp_data(bas_begin_idx:bas_end_idx); 
 end
 
-[bas_P_welch, bas_F_welch] = pwelch(lfp_bas);
+mean_lfp_bas = mean(lfp_bas,1);
+
+[bas_P_welch, bas_F_welch] = pwelch(mean_lfp_bas,200,100,1000,Fs);
 
 %Plotting stimulus presentation and baseline welch estimations
-subplot(311)
-plot((stim_F_welch/pi),stim_P_welch)
+fig_lfp_stim = subplot(311);
+plot(stim_F_welch,(log10(stim_P_welch)*10))
 ylabel('Power');
-xlabel('Normalised Frequency (x pi)');
+xlim(fig_lfp_stim, [0 260])
+xlabel('Normalised Frequency');
 title("Welch Estimation during stimulus presentation")
 
-subplot(312)
-plot((bas_F_welch/pi), bas_P_welch)
+fig_lfp_bas = subplot(312);
+plot(bas_F_welch, (log10(bas_P_welch)*10))
 ylabel('Power');
-xlabel('Normalised Frequency (x pi)');
+xlim(fig_lfp_bas, [0 260])
+xlabel('Normalised Frequency');
 title("Welch Estimation during baseline")
 
-subplot(313)
-plot((stim_F_welch/pi),(stim_P_welch./bas_P_welch))
+fig_lfp_bas_stim = subplot(313);
+plot(stim_F_welch,(log10((stim_P_welch./bas_P_welch))*10))
 ylabel('Power');
-xlabel('Normalised Frequency (x pi)');
-title("Welch Estimation for the relative power change")
+xlim(fig_lfp_bas_stim, [0 260])
+xlabel('Normalised Frequency');
+title("Welch Estimation for the relative power change (stimulus presentation/baseline)")
 
 
 %% Exercise 4

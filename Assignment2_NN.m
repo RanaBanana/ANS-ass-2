@@ -205,8 +205,9 @@ title("Welch Estimation for the relative power change (stimulus presentation/bas
 
 
 %% Exercise 4
-clear all
-load('assignment2_data.mat')
+% Exercise 4
+% clear all
+% load('assignment2_data.mat')
 
 % Combine the events_ts and events_type to mark when the stimulus was
 % presented.
@@ -223,66 +224,72 @@ postStim = 1000000; % time after stimulus offset in microseconds
 window_spike = 250000; % spike window -250 to 250ms around spikes
 
 % Categorize the spikes in baseline and stimulus presentation window.
-    % Preallocate variables
-    base_spikes_ts = [];
-    base_spikes = [];
-    stim_spikes_ts = [];
-    stim_spikes = [];
-    
+K=0;
+L=0;
 for i = 1:length(onTimes) 
     % 1. Baseline (-500 to 0 ms):
-    % Find spikes_idx and corresponding ts in every baseline
+    % Find spikes_idx and corresponding ts in every baseline and add them
+    % in one variable (base_spikes_ts)
     base_spikes_idx = find(spikes_ts>=(onTimes(i)-ms_500)& spikes_ts < onTimes(i));
-    base_spikes_ts = spikes_ts(base_spikes_idx);
-    base_spikes = horzcat(base_spikes, base_spikes_ts);
+    base_spikes_ts(K+1:K+numel(base_spikes_idx)) = spikes_ts(base_spikes_idx);
+    K=K+numel(base_spikes_idx);
     
     % 2. Stimulus presentation window (0 to 500ms):
-    % Find spikes_idx and corresponding ts in every stim presentation
+    % Find spikes_idx and corresponding ts in every stim presentation and 
+    % add them in one variable (stim_spikes_ts) 
     stim_spikes_idx = find(spikes_ts>=onTimes(i)& spikes_ts < offTimes(i));
-    stim_spikes_ts = spikes_ts(stim_spikes_idx);
-    stim_spikes = horzcat(stim_spikes, stim_spikes_ts);
+    stim_spikes_ts(L+1:L+numel(stim_spikes_idx)) = spikes_ts(stim_spikes_idx);
+    L=L+numel(stim_spikes_idx);
 end
 
 % Find the corresponding lfp_ts values with the average spike window in baseline.
-    % Preallocate variables
-    base_lfp = [];
-    base_window_idx = [];
-    base_window_length = [];
-    stim_lfp = [];
-    stim_window_idx = [];
-    stim_window_length = [];    
-    
-for j = 1: length(base_spikes)
-    [~, idx_beg] = min(abs(lfp_ts-(base_spikes(j)-window_spike)));
-    [~, idx_end] = min(abs(lfp_ts-(base_spikes(j)+window_spike)));
+    % Preallocate window variables
+    base_window_idx = NaN(length(base_spikes_ts), 2);
+    base_window_length = NaN(length(base_spikes_ts),1);
+    stim_window_idx = NaN(length(stim_spikes_ts), 2);
+    stim_window_length =  NaN(length(stim_spikes_ts),1);    
+
+% 1. Baseline:     
+for j = 1: length(base_spikes_ts)
+    [~, idx_beg] = min(abs(lfp_ts-(base_spikes_ts(j)-window_spike)));
+    [~, idx_end] = min(abs(lfp_ts-(base_spikes_ts(j)+window_spike)));
     % Calculate the window length. This will later be used to calculate the
     % average time window. Idem for stimulus window.
     base_window_idx (j,:) = [idx_beg, idx_end]; 
-    base_window_length(j,:) = idx_end-idx_beg;
+    base_window_length(j) = idx_end-idx_beg;
 end
 
 % Calculate the average time window and iterate over the lfp_data signal to
 % find the corresponding lfp values. The values start from the idx begin
 % + the average length of the window-1. Idem for stimulus window.
-base_window_length_mean = mean(base_window_length);
+base_window_length_mean_r = round(mean(base_window_length));
+    
+% Preallocate base_lfp
+    base_lfp = NaN(length(base_window_idx), base_window_length_mean_r);
 for k = 1:length(base_window_idx)
-    base_lfp(k,:) = lfp_data(base_window_idx(k,1):(base_window_idx(k,1)+round(base_window_length_mean))-1);
+    base_lfp(k,:) = lfp_data(base_window_idx(k,1):(base_window_idx(k,1)+base_window_length_mean_r)-1);
 end
 
-for l = 1: length(stim_spikes)
-    [~, idx_beg] = min(abs(lfp_ts-(stim_spikes(l)-window_spike)));
-    [~, idx_end] = min(abs(lfp_ts-(stim_spikes(l)+window_spike))); 
+% 2. Stimulus presentation (same steps as baseline):
+for l = 1: length(stim_spikes_ts)
+    [~, idx_beg] = min(abs(lfp_ts-(stim_spikes_ts(l)-window_spike)));
+    [~, idx_end] = min(abs(lfp_ts-(stim_spikes_ts(l)+window_spike))); 
     stim_window_idx (l,:) = [idx_beg, idx_end]; 
-    stim_window_length(l,:) = idx_end-idx_beg;
+    stim_window_length(l) = idx_end-idx_beg;
 end
 
-stim_window_length_mean = mean(stim_window_length);
+stim_window_length_mean_r = round(mean(stim_window_length));  
+    
+% Preallocate stim_lfp
+    stim_lfp = NaN(length(stim_window_idx), stim_window_length_mean_r);
 for m = 1:length(stim_window_idx)
-    stim_lfp(m,:) = lfp_data(stim_window_idx(m,1):(stim_window_idx(m,1)+round(stim_window_length_mean))-1);
+    stim_lfp(m,:) = lfp_data(stim_window_idx(m,1):(stim_window_idx(m,1)+stim_window_length_mean_r)-1);
 end
 
-% Plotting lfp_base_mean:
-figure
+% Plot spike-triggered LFP signal for baseline and stimulus presentation:
+
+% Plot lfp_base_mean:
+figure('Name','Exercise 4','NumberTitle','off')
 subplot(2,1,1)
 lfp_base_mean = mean(base_lfp, 1);
 t1 = linspace(-250,250, length(lfp_base_mean));
@@ -291,13 +298,12 @@ title('Spike-triggered LFP signal during baseline')
 xlabel('Time window around spikes (ms)');
 ylabel('Average LFP signal (µV)');
 
-% Plotting lfp_stim_mean:
+% Plot lfp_stim_mean:
 subplot(2,1,2)
 lfp_stim_mean = mean(stim_lfp, 1);
 t2 = linspace(-250,250, length(lfp_stim_mean));
 plot(t2,lfp_stim_mean);
 title('Spike-triggered LFP signal during stimulus presentation')
-% xlim([0 500])
 xlabel('Time window around spikes (ms)');
 ylabel('Average LFP signal (µV)');
 

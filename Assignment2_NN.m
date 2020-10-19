@@ -46,70 +46,58 @@ firing_rate = spike_count/(length(onTimes)*(timeBin/10^6));
 figure('Name','Exercise 1','NumberTitle','off')
 t_freq = linspace(-500,1500, length(firing_rate));
 bar(t_freq,firing_rate);
-xlabel('Time from stimulus onset (s)', 'FontSize', 12);
+xlabel('Time from stimulus onset (ms)', 'FontSize', 12);
 ylabel('Firing Rate (Hz)', 'FontSize', 12);
 title('PSTH of audiovisual stimulus', 'FontSize', 14);
  
-%% Exercise 2
-% Evaluate whether spiking activity during stimulus presentation period (the period
-% from stimulus onset to 500 ms afterwards) is significantly different from baseline
-% (defined as the activity in the 500 ms preceding stimulus onset). Is there a significant
-% response?
+%% Exercise 2 --> continuation of exercise 1
 
-%These are both the same value, so to make the code more efficient it is
-%possible to make these the same variable.
-preStim = 500000; % time before stimulus onset in microseconds
-postStim = 500000; %time after stimulus onset in microseconds
+% Create variable for 500000 ms.
+ms_500 = 500000; % 500 ms in microseconds. Used as both time before and after stimulus onset.
 
-for i = 1:length(onTimes) 
-    % We use find() to acquire all relevant timepoints on the dataset that are inbetween
-    % the onset timing - 500 and onset timing + 500. We then assign it to
-    % a variable called hit.
-    hit = find(spikes_ts >= (onTimes(i) - preStim) & spikes_ts <= (onTimes(i) + postStim));
-    %Baseline
-    hit_baseline = find(spikes_ts <= onTimes(i) & spikes_ts >= (onTimes(i) - preStim));
-    %stimulus presentation
-    hit_stm_pres = find(spikes_ts >= onTimes(i) & spikes_ts <= (onTimes(i) + postStim));
+% Categorize the firing rate bins in baseline and stimulus presentation 
+% window.
+baseline_fr = firing_rate(edges>=-ms_500 & edges<0); 
+stimulus_fr = firing_rate(edges>=0 & edges<ms_500);
+
+% Test assumptions for parametric testing
+    % Test for normally distributed data using Shapiro-Wilk test:
+    % H0: X is normal with unspecified mean and variance
+[h_base,p_base,SW_base] = swtest(baseline_fr); % h = 1; p = 0.0240 <0.05; sw =0.8853-> reject H0
+[h_stim,p_stim,SW_stim] = swtest(stimulus_fr); % h = 1; p = 0.0097 <0.05; sw =0.8653-> reject H0
+    % Both are not normally distributed, so assumptions for parametric testing
+    % are violated. --> non-parametric test: Wilcoxon singed rank test
     
-    % Create vectors containing the spiketimes in all baseline (-500 to
-    % 0ms) and all stimulus (0 to 500) timewindow
-    baseline(i, 1:length(spikes_on_time_bas)) = spikes_on_time_bas;
-    stimulus(i, 1:length(spikes_on_time_stm)) = spikes_on_time_stm;
-    
-end
+% Wilcoxon Signed Rank Test:
+    % H0 = x – y comes from a distribution with zero median.
+[p_WSR, h_WSR, stats_WSR] = signrank(baseline_fr, stimulus_fr); % h = 1; p = 1.2975e-04 <0.05 --> reject H0
 
-% Convert timestamps in both timewindows to 1s and 0s in order to count the
-% different spikes. (This does not remove the 0s!)
-baseline_remove_zeros = baseline ~=0;
-stimulus_remove_zeros = stimulus ~=0;
+% This means that spiking activity during stimulus presentation period 
+% significantly differs from spiking activity during baseline.
 
-% Calculate the #spikes for each timewindow in all baseline and stimulus
-% timewindow. 
-% !!!!!! This can probably be done in a different (quicker way), same
-% for the step above.
-baseline_small_sum = sum(baseline_remove_zeros,2);
-stimulus_small_sum = sum(stimulus_remove_zeros,2);
+% Descriptive statistics:
+    % Median
+baseline_fr_med = median(baseline_fr); % median = 0.3640
+stimulus_fr_med = median(stimulus_fr); % median = 14.7219
 
-% Calculate the average #spikes in the baseline and in the stimulus
-% timewindow.
-baseline_avg = mean(baseline_small_sum); % 0.1749
-stimulus_avg = mean(stimulus_small_sum); % 6.0566
-
+    % IQR
+baseline_fr_IQR = iqr(baseline_fr); % IQR = 0.1011
+stimulus_fr_IQR = iqr(stimulus_fr); % IQR = 14.2164
 
 %% Exercise 3
 
-%clearing workspace and loading raw data.
+% Clear workspace and loading raw data.
 clear all;
 load('assignment2_data.mat');
 
-%Variable definitions
-%Creating vectors with the timestamps during which the stimulus was
-%presented (for both on- and offset of stimulus presentation).
+% Variable definitions
+% Create vectors with the timestamps during which the stimulus was
+% presented (for both on- and offset of stimulus presentation).
 events = table(events_ts, events_type);
 onTimes = events.events_ts(events_type==1);
 offTimes = events.events_ts(events_type==31);
 
-% create a zeros-matrix (preallocating) for the wanted values of lfp_data 
+% Create a zeros-matrix (preallocating) for the wanted values of lfp_data 
 stim_P = zeros(length(onTimes),501);
 bas_P = zeros(length(onTimes),501);
 

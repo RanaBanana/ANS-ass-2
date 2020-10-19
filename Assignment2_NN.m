@@ -21,7 +21,6 @@ ms_500 = 500000; % 500 ms in microseconds. Used as preStim and stimulus presenta
 postStim = 1000000; % time after stimulus offset in microseconds
 
 % Select PSTH binsize and edges
-
 timeBin = 25000; % time bin in microseconds
 edges = (-500000: timeBin: 1500000);
 
@@ -39,14 +38,12 @@ for i = 1:length(onTimes) % Loop over all trials
     spike_count = spike_count+histcounts(relative_spikes,edges);  
 end
 
-% Compute average number of spikes per bin ->?
-
 % Divide by total length of PSTH to compute firing rate (= estimated spikes 
 % per second. In Hz, so timeBin in seconds)
-firing_rate = spike_count/(length(onTimes)*(timeBin/10^3));
+firing_rate = spike_count/(length(onTimes)*(timeBin/10^6));
 
 % Plot PSTH
-figure('Name','Exercise 1firing_rate','NumberTitle','off')
+figure('Name','Exercise 1','NumberTitle','off')
 t_freq = linspace(-500,1500, length(firing_rate));
 bar(t_freq,firing_rate);
 xlabel('Time from stimulus onset (s)', 'FontSize', 12);

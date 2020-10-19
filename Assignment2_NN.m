@@ -97,22 +97,19 @@ stimulus_avg = mean(stimulus_small_sum); % 6.0566
 
 
 %% Exercise 3
-% Which (if any) LFP frequency is significantly
-% modulated by stimulus presentation? What is the origin of the sharp peaks in the spectra?
 
 %clearing workspace and loading raw data.
 clear all;
 load('assignment2_data.mat');
 
 %Variable definitions
-
 %Creating vectors with the timestamps during which the stimulus was
-%presented (both on and off)
+%presented (for both on- and offset of stimulus presentation).
 events = table(events_ts, events_type);
 onTimes = events.events_ts(events_type==1);
 offTimes = events.events_ts(events_type==31);
 
-% create a zeros-matrix (preallocating) for the wanted values of lfp_data
+% create a zeros-matrix (preallocating) for the wanted values of lfp_data 
 stim_P = zeros(length(onTimes),501);
 bas_P = zeros(length(onTimes),501);
 
@@ -123,9 +120,11 @@ bas_P = zeros(length(onTimes),501);
 % for length(onTimes) times, because this is the same number of stimulus
 % presentation (and baseline) periods.
 % Next, this for-loop takes the index for the wanted timestamps, which
-% corresponds to the index in lfp_data. The wanted values in lfp_data are
-% then cast into the matrix that was made before (lfp_stim or lfp_bas) for
-% both the stimulus presentation and baseline periods.
+% corresponds to the index in lfp_data. The power and frequency values of 
+% the wanted values in lfp_data are calculated using the pwelch() function.
+% The power and frequency values are then cast into the matrix that was made
+% before(stim_P or bas_P)for both the stimulus presentation and baseline 
+% periods. 
 for i = 1:length(onTimes)
     [~,stim_begin_idx] = min(abs(lfp_ts - onTimes(i)));
     [~,stim_end_idx] = min(abs(lfp_ts - offTimes(i)));
@@ -136,62 +135,68 @@ for i = 1:length(onTimes)
     [bas_P(i,:), bas_F] = pwelch(lfp_data(bas_begin_idx:bas_end_idx),200,100,1000,1000);
 end
 
-% % Calculating the mean LFP signal for the stimulus presentation period.
-% % Then, the pwelch function is used to make a Welch estimation.
+% Calculating the mean power for the stimulus presentation period.
+% Also, stim_F is assigned to a transposed version of stim_F, just for
+% our peace of mind. This makes stim_F into a row vector instead of a
+% column vector, which is nicer to work with.
 mean_stim_P = mean(stim_P, 1);
-mean_stim_F = stim_F';
+stim_F = stim_F';
 
-% % Calculating the mean LFP signal for the baseline period.
-% % Then, the pwelch function is used to make a Welch estimation.
+% Calculating the mean power for the baseline period.
+% Also, bas_F is assigned to a transposed version of bas_F, just for
+% our peace of mind. This makes bas_F into a row vector instead of a
+% column vector, which is nicer to work with.
 mean_bas_P = mean(bas_P, 1);
-mean_bas_F = bas_F';
+bas_F = bas_F';
 
-% Plotting the Welch estimation for both the stimulus presentation period
-% (red) and the baseline period (black).
+% Plotting the power spectrum/ Welch estimation for both the stimulus 
+% presentation period (red) and the baseline period (black).
 fig_welch = subplot(211);
-plot(mean_stim_F,(log10(mean_stim_P)*10), 'r')
+plot(stim_F,(log10(mean_stim_P)*10), 'r')
 hold on
-plot(mean_bas_F, (log10(mean_bas_P)*10), 'k')
+plot(bas_F, (log10(mean_bas_P)*10), 'k')
 hold off
 ylabel('Power (a.u)');
 xlim(fig_welch, [0 260])
 xlabel('Normalised Frequency (Hz)');
-title("Welch Estimation during stimulus presentation vs baseline")
+title("Power spectrum for stimulus presentation vs baseline")
 legend('stimulus presentation', 'baseline')
 
-% Plotting the Welch estimation for the relative power change (calculated
-% by element-wise division of the power for stimulus presentation by the
-% power for baseline.
+% Plotting the power spectrum/ Welch estimation for the relative power 
+% change (calculated by element-wise division of the power for stimulus 
+% presentation by the power for baseline.
 fig_relative_welch = subplot(212);
-plot(mean_stim_F,(log10((mean_stim_P./mean_bas_P))*10))
+plot(stim_F,(log10((mean_stim_P./mean_bas_P))*10))
 ylabel('Power (a.u)');
 xlim(fig_relative_welch, [0 260])
 xlabel('Normalised Frequency (Hz)');
-title("Welch Estimation for the relative power change (stimulus presentation/baseline)")
+title("Power spectrum for the relative power change (stimulus presentation/baseline)")
 
-% Normalising the power vectors for baseline and evoked (stimulus
-% presentation)
+% Normalising the power vectors for baseline and stimulus presentation
 normalise_baseline = mean_bas_P/ max(mean_bas_P);
 normalise_stim = mean_stim_P/ max(mean_stim_P);
+
+% Plotting the normalised power vs 
 figure
-plot(mean_stim_F, 10*log10(normalise_baseline), 'k')
+plot(stim_F, 10*log10(normalise_baseline), 'k')
 hold on
-plot(mean_stim_F, 10*log10(normalise_stim),'r')
+plot(stim_F, 10*log10(normalise_stim),'r')
 ylabel('Normalised Power (a.u)');
 xlim([0 260])
 xlabel('Normalised Frequency (Hz)');
-title("Welch Estimation for normalised power")
+title("Power spectrum for stimulus presentation vs baseline")
 legend('baseline', 'stimulus presentation')
 
 % Statistics
 % By visual inspection, we chose range1 to be from 10-80 Hz.
-range1_stim = mean_stim_P(mean_stim_F>10 & mean_stim_F<=80);
-range1_bas = mean_bas_P(mean_stim_F>10 & mean_stim_F<=80);
+range1_stim = mean_stim_P(stim_F>10 & stim_F<=80);
+range1_bas = mean_bas_P(stim_F>10 & stim_F<=80);
 
 % By visual inspection, we chose range2 to be from 100-245 Hz.
-range2_stim = mean_stim_P(mean_stim_F>100 & mean_stim_F<=245);
-range2_bas = mean_bas_P(mean_stim_F>100 & mean_stim_F<=245);
+range2_stim = mean_stim_P(stim_F>100 & stim_F<=245);
+range2_bas = mean_bas_P(stim_F>100 & stim_F<=245);
 
+% Assumptions
 % Testing if the data is normally distributed
 [H, pValue, W] = swtest(range1_stim);
 % H = 1

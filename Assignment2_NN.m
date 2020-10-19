@@ -1,11 +1,11 @@
-%Assignment 2
-%Nick, Eline, & Rana 
-%Nervous Neurons
+% Assignment 2
+% Nick, Eline, & Rana 
+% Nervous Neurons
 
 %% Exercise 1
 clear all
 
-% load data
+% Load data
 load('assignment2_data.mat')
 
 % Combine the events_ts and events_type to mark when the stimulus was
@@ -194,7 +194,7 @@ range2_bas = mean_bas_P(stim_F>100 & stim_F<=245);
 [H, pValue, W] = swtest(range1_bas);
 % H =1
 % pValue = 2.2443e-11
-%W =0.5551
+% W =0.5551
 
 [H, pValue, W] = swtest(range2_bas);
 % H =1
@@ -331,7 +331,7 @@ title('Spike-triggered LFP signal during stimulus presentation')
 xlabel('Time window around spikes (ms)');
 ylabel('Average LFP signal (µV)');
 
-%% exercise 5
+%% Exercise 5
 % Rough expectations of what is desired.
 % Consider the following 3 frequency ranges (2,6)Hz, (10, 20)Hz and (30,
 % 40)Hz
@@ -485,7 +485,7 @@ events_table = table(events_ts, events_type);
 onTimes = events_table.events_ts(events_type==1);
 offTimes = events_table.events_ts(events_type==31);
 
-% for-loop used to iterate over the length of stimuli. 
+% For-loop used to iterate over the length of stimuli. 
 for k = 1:length(onTimes)
     % We assign any values relevant during stimulus presentation to "hit".
     hit = find(spikes_ts >= onTimes(k) & spikes_ts < offTimes(k));
@@ -495,7 +495,7 @@ for k = 1:length(onTimes)
     sp_dur_stim(k, 1:length(loc_sp)) = loc_sp;
 end
 
-remove_zero_sp = sp_dur_stim ~= 0; % remove any zero values left from our 
+remove_zero_sp = sp_dur_stim ~= 0; % Remove any zero values left from our 
                                    % for-loop.
 tryout = sp_dur_stim(remove_zero_sp)'; % Apply the removed zero's comparison
                                        % to our original m x n. Transpose

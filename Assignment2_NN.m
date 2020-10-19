@@ -105,19 +105,16 @@ clear all;
 load('assignment2_data.mat');
 
 %Variable definitions
-%sampling frequency
-Fs = 1000;
+
 %Creating vectors with the timestamps during which the stimulus was
 %presented (both on and off)
 events = table(events_ts, events_type);
 onTimes = events.events_ts(events_type==1);
 offTimes = events.events_ts(events_type==31);
 
-%LFP signal during stimulus presentation
-%Creating a matrix(preallocating) for the LFP data values during both
-%stimulus presentation and baseline periods.
-lfp_stim = zeros(length(onTimes),500);
-lfp_bas = zeros(length(onTimes),500);
+% create a zeros-matrix (preallocating) for the wanted values of lfp_data
+stim_P = zeros(length(onTimes),501);
+bas_P = zeros(length(onTimes),501);
 
 % This for-loop makes sure that the onset and offset timestamps correspond
 % with the same LFP timestamps for the stimulus presentation periods. Also,
@@ -132,48 +129,111 @@ lfp_bas = zeros(length(onTimes),500);
 for i = 1:length(onTimes)
     [~,stim_begin_idx] = min(abs(lfp_ts - onTimes(i)));
     [~,stim_end_idx] = min(abs(lfp_ts - offTimes(i)));
-    lfp_stim(i,(1:(stim_end_idx-stim_begin_idx+1))) = lfp_data(stim_begin_idx:stim_end_idx);
+    [stim_P(i,:), stim_F] = pwelch(lfp_data(stim_begin_idx:stim_end_idx),200,100,1000,1000);
     
     [~,bas_begin_idx] = min(abs(lfp_ts - (onTimes(i)-500000)));
-    [~,bas_end_idx] = min(abs(lfp_ts - onTimes(i)));
-    lfp_bas(i,(1:(bas_end_idx-bas_begin_idx+1))) = lfp_data(bas_begin_idx:bas_end_idx); 
+    [~,bas_end_idx] = min(abs(lfp_ts - onTimes(i))); 
+    [bas_P(i,:), bas_F] = pwelch(lfp_data(bas_begin_idx:bas_end_idx),200,100,1000,1000);
 end
 
-% Calculating the mean LFP signal for the stimulus presentation period.
-% Then, the pwelch function is used to make a Welch estimation.
-mean_lfp_stim = mean(lfp_stim,1);
-[stim_P_welch, stim_F_welch] = pwelch(mean_lfp_stim,200,100,1000, Fs);
+% % Calculating the mean LFP signal for the stimulus presentation period.
+% % Then, the pwelch function is used to make a Welch estimation.
+mean_stim_P = mean(stim_P, 1);
+mean_stim_F = stim_F';
 
-% Calculating the mean LFP signal for the baseline period.
-% Then, the pwelch function is used to make a Welch estimation.
-mean_lfp_bas = mean(lfp_bas,1);
-[bas_P_welch, bas_F_welch] = pwelch(mean_lfp_bas,200,100,1000,Fs);
+% % Calculating the mean LFP signal for the baseline period.
+% % Then, the pwelch function is used to make a Welch estimation.
+mean_bas_P = mean(bas_P, 1);
+mean_bas_F = bas_F';
 
-% Plotting the Welch estimation for the stimulus presentation period.
-fig_lfp_stim = subplot(311);
-plot(stim_F_welch,(log10(stim_P_welch)*10))
-ylabel('Power');
-xlim(fig_lfp_stim, [0 260])
-xlabel('Normalised Frequency');
-title("Welch Estimation during stimulus presentation")
-
-% Plotting the Welch estimation for the baseline period.
-fig_lfp_bas = subplot(312);
-plot(bas_F_welch, (log10(bas_P_welch)*10))
-ylabel('Power');
-xlim(fig_lfp_bas, [0 260])
-xlabel('Normalised Frequency');
-title("Welch Estimation during baseline")
+% Plotting the Welch estimation for both the stimulus presentation period
+% (red) and the baseline period (black).
+fig_welch = subplot(211);
+plot(mean_stim_F,(log10(mean_stim_P)*10), 'r')
+hold on
+plot(mean_bas_F, (log10(mean_bas_P)*10), 'k')
+hold off
+ylabel('Power (a.u)');
+xlim(fig_welch, [0 260])
+xlabel('Normalised Frequency (Hz)');
+title("Welch Estimation during stimulus presentation vs baseline")
+legend('stimulus presentation', 'baseline')
 
 % Plotting the Welch estimation for the relative power change (calculated
 % by element-wise division of the power for stimulus presentation by the
 % power for baseline.
-fig_lfp_bas_stim = subplot(313);
-plot(stim_F_welch,(log10((stim_P_welch./bas_P_welch))*10))
-ylabel('Power');
-xlim(fig_lfp_bas_stim, [0 260])
-xlabel('Normalised Frequency');
+fig_relative_welch = subplot(212);
+plot(mean_stim_F,(log10((mean_stim_P./mean_bas_P))*10))
+ylabel('Power (a.u)');
+xlim(fig_relative_welch, [0 260])
+xlabel('Normalised Frequency (Hz)');
 title("Welch Estimation for the relative power change (stimulus presentation/baseline)")
+
+% Normalising the power vectors for baseline and evoked (stimulus
+% presentation)
+normalise_baseline = mean_bas_P/ max(mean_bas_P);
+normalise_stim = mean_stim_P/ max(mean_stim_P);
+figure
+plot(mean_stim_F, 10*log10(normalise_baseline), 'k')
+hold on
+plot(mean_stim_F, 10*log10(normalise_stim),'r')
+ylabel('Normalised Power (a.u)');
+xlim([0 260])
+xlabel('Normalised Frequency (Hz)');
+title("Welch Estimation for normalised power")
+legend('baseline', 'stimulus presentation')
+
+% Statistics
+% By visual inspection, we chose range1 to be from 10-80 Hz.
+range1_stim = mean_stim_P(mean_stim_F>10 & mean_stim_F<=80);
+range1_bas = mean_bas_P(mean_stim_F>10 & mean_stim_F<=80);
+
+% By visual inspection, we chose range2 to be from 100-245 Hz.
+range2_stim = mean_stim_P(mean_stim_F>100 & mean_stim_F<=245);
+range2_bas = mean_bas_P(mean_stim_F>100 & mean_stim_F<=245);
+
+% Testing if the data is normally distributed
+[H, pValue, W] = swtest(range1_stim);
+% H = 1
+% pValue = 2.1242e-09
+% W = 0.6924
+
+[H, pValue, W] = swtest(range1_bas);
+% H =1
+% pValue = 2.2443e-11
+%W =0.5551
+
+[H, pValue, W] = swtest(range2_bas);
+% H =1
+% pValue = 4.2839e-10
+% W = 0.8332
+
+[H, pValue, W] = swtest(range2_stim);
+% H =1
+% pValue =4.4787e-06
+% W =0.9370
+
+% The assumptions of normality of the data has been violated, so the 
+% Wilcoxon signed rank test will be performed on our data.
+
+% Wilcoxon signed rank test on range1
+[p_WSR, h_WSR, stats_WSR] = signrank(range1_stim, range1_bas);
+% p_WSR = 3.5595e-13 (p_value)
+% h_WSR = 1
+% stats_WSR = 
+%   struct with fields:
+%           zval: 7.2713
+%     signedrank: 2485
+
+% Wilcoxon signed rank test on range2
+[p_WSR, h_WSR, stats_WSR] = signrank(range2_stim, range2_bas);
+% p_WSR = 1.5247e-25 (p_value)
+% h_WSR = 1
+% stats_WSR = 
+%   struct with fields:
+%           zval: 10.4462
+%     signedrank: 10585
+
 
 %% Exercise 4
 % Exercise 4

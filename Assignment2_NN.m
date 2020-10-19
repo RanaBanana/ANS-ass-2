@@ -100,19 +100,14 @@ stimulus_avg = mean(stimulus_small_sum); % 6.0566
 
 
 %% Exercise 3
-% Compute and plot the LFP power spectrum (using the pwelch function) during both
-% baseline (500 ms before stimulus onset) and stimulus presentation (onset-offset)
-% Take care in computing the power spectrum using parameters
-% appropriate to the sampling frequency (1 kHz) and duration of the signal. Also compute and plot a
-% relative power spectrum, defined as relative power change (per frequency bin) between
-% baseline and presentation periods. Which (if any) LFP frequency is significantly
+% Which (if any) LFP frequency is significantly
 % modulated by stimulus presentation? What is the origin of the sharp peaks in the spectra?
 
+%clearing workspace and loading raw data.
 clear all;
 load('assignment2_data.mat');
 
 %Variable definitions
-
 %sampling frequency
 Fs = 1000;
 %Creating vectors with the timestamps during which the stimulus was
@@ -122,40 +117,42 @@ onTimes = events.events_ts(events_type==1);
 offTimes = events.events_ts(events_type==31);
 
 %LFP signal during stimulus presentation
-%Create a matrix(preallocating)
+%Creating a matrix(preallocating) for the LFP data values during both
+%stimulus presentation and baseline periods.
 lfp_stim = zeros(length(onTimes),500);
+lfp_bas = zeros(length(onTimes),500);
 
+% This for-loop makes sure that the onset and offset timestamps correspond
+% with the same LFP timestamps for the stimulus presentation periods. Also,
+% it makes sure that the onset-500ms and onset timestamps correspond
+% with the same LFP timestamps for the baseline periods. The iteration runs
+% for length(onTimes) times, because this is the same number of stimulus
+% presentation (and baseline) periods.
+% Next, this for-loop takes the index for the wanted timestamps, which
+% corresponds to the index in lfp_data. The wanted values in lfp_data are
+% then cast into the matrix that was made before (lfp_stim or lfp_bas) for
+% both the stimulus presentation and baseline periods.
 for i = 1:length(onTimes)
     [~,stim_begin_idx] = min(abs(lfp_ts - onTimes(i)));
     [~,stim_end_idx] = min(abs(lfp_ts - offTimes(i)));
-    lfp_stim(i,(1:(stim_end_idx-stim_begin_idx+1))) = lfp_data(stim_begin_idx:stim_end_idx); 
+    lfp_stim(i,(1:(stim_end_idx-stim_begin_idx+1))) = lfp_data(stim_begin_idx:stim_end_idx);
+    
+    [~,bas_begin_idx] = min(abs(lfp_ts - (onTimes(i)-500000)));
+    [~,bas_end_idx] = min(abs(lfp_ts - onTimes(i)));
+    lfp_bas(i,(1:(bas_end_idx-bas_begin_idx+1))) = lfp_data(bas_begin_idx:bas_end_idx); 
 end
 
-%If this all doesn't work:
-%Perhaps take the pwelch in the for-loop, put every P_welch value in an 
-%array, and average it after the for-loop.
-
+% Calculating the mean LFP signal for the stimulus presentation period.
+% Then, the pwelch function is used to make a Welch estimation.
 mean_lfp_stim = mean(lfp_stim,1);
-%f = (-Fs/2, Fs/2, nfft)
-%nfft_stim = length(mean_lfp_stim);
-%f_stim = linspace(-Fs/2, Fs/2, nfft_stim);
 [stim_P_welch, stim_F_welch] = pwelch(mean_lfp_stim,200,100,1000, Fs);
- 
-%LFP signal during baseline
-%Create a matrix(preallocating)
-lfp_bas = zeros(length(onTimes),500);
 
-for j = 1:length(onTimes)
-    [~,bas_begin_idx] = min(abs(lfp_ts - (onTimes(j)-500000)));
-    [~,bas_end_idx] = min(abs(lfp_ts - onTimes(j)));
-    lfp_bas(j,(1:(bas_end_idx-bas_begin_idx+1))) = lfp_data(bas_begin_idx:bas_end_idx); 
-end
-
+% Calculating the mean LFP signal for the baseline period.
+% Then, the pwelch function is used to make a Welch estimation.
 mean_lfp_bas = mean(lfp_bas,1);
-
 [bas_P_welch, bas_F_welch] = pwelch(mean_lfp_bas,200,100,1000,Fs);
 
-%Plotting stimulus presentation and baseline welch estimations
+% Plotting the Welch estimation for the stimulus presentation period.
 fig_lfp_stim = subplot(311);
 plot(stim_F_welch,(log10(stim_P_welch)*10))
 ylabel('Power');
@@ -163,6 +160,7 @@ xlim(fig_lfp_stim, [0 260])
 xlabel('Normalised Frequency');
 title("Welch Estimation during stimulus presentation")
 
+% Plotting the Welch estimation for the baseline period.
 fig_lfp_bas = subplot(312);
 plot(bas_F_welch, (log10(bas_P_welch)*10))
 ylabel('Power');
@@ -170,13 +168,15 @@ xlim(fig_lfp_bas, [0 260])
 xlabel('Normalised Frequency');
 title("Welch Estimation during baseline")
 
+% Plotting the Welch estimation for the relative power change (calculated
+% by element-wise division of the power for stimulus presentation by the
+% power for baseline.
 fig_lfp_bas_stim = subplot(313);
 plot(stim_F_welch,(log10((stim_P_welch./bas_P_welch))*10))
 ylabel('Power');
 xlim(fig_lfp_bas_stim, [0 260])
 xlabel('Normalised Frequency');
 title("Welch Estimation for the relative power change (stimulus presentation/baseline)")
-
 
 %% Exercise 4
 % Exercise 4

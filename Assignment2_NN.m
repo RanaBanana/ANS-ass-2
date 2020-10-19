@@ -373,20 +373,19 @@ filt_2_6 = zeros(size(X)); % First we allocate space from our size of X.
 a=find(abs(f_s)>= 2 & abs(f_s) <= 6); % We use the find() function again
                                       % to look for all points inbetween
                                       % the specified values.
-filt_2_6(a) = 1; % Odd step at cursory glance, we assign 1 to "hits" so  
+filt_2_6(a) = 1; % Odd step at cursory glance, we assign 1 to "hits" (a) so  
                  % that during later element operation we can pull a nifty
-                 % trick (see line 57).
+                 % trick (see line 388).
 
 filt_10_20 = zeros(size(X)); % We repeat these steps twice below. 
-b=find(abs(f_s)>= 10 & abs(f_s) <= 20); % -Same logic-
-filt_10_20(b) = 1; % -Same logic- 
+b=find(abs(f_s)>= 10 & abs(f_s) <= 20); 
+filt_10_20(b) = 1; 
 
-filt_30_40 = zeros(size(X)); % -Same logic-
-c=find(abs(f_s)>= 30 & abs(f_s) <= 40); % -Same logic-
-filt_30_40(c) = 1; % -Same logic-
+filt_30_40 = zeros(size(X)); 
+c=find(abs(f_s)>= 30 & abs(f_s) <= 40); 
+filt_30_40(c) = 1; 
 
-X_f1 = X.*filt_2_6; % This was the nifty trick (Nick's imo, don't judge my
-                    % group if it's lame). We want to multiply all relevant
+X_f1 = X.*filt_2_6; % This was the nifty trick. We want to multiply all relevant
                     % datapoints our filter with our Fourier transformed
                     % data: X. We use the .* application to multiply
                     % element wise through all data, because we assigned a
@@ -397,14 +396,14 @@ X_f1 = X.*filt_2_6; % This was the nifty trick (Nick's imo, don't judge my
                     % timeframe.)
 X_ff1 =ifft(X_f1, nfft); % We do an inverse fast Fourier transform to convert
                          % all data from our frequency domain to a time do-
-                         % main. (if our signal is non-periodic, the resul-
+                         % main. (If our signal is non-periodic, the resul-
                          % ting frequency spectrum will start to affected
                          % by leakage).
 X_f2 = X.*filt_10_20; % Here we repeat the two steps above twice again.
-X_ff2 =ifft(X_f2, nfft); % -Same logic-
-X_f3 = X.*filt_30_40; % -Same logic-
-X_ff3 =ifft(X_f3, nfft); % -Same logic-
-Total_X_ff = {X_ff1 X_ff2 X_ff3}; % -Same logic
+X_ff2 =ifft(X_f2, nfft); 
+X_f3 = X.*filt_30_40; 
+X_ff3 =ifft(X_f3, nfft); 
+Total_X_ff = {X_ff1 X_ff2 X_ff3}; 
 
 Freq = ["LFP 2 to 6Hz filtered", "LFP 10 to 20Hz filtered", "LFP 30 to 40Hz filtered"];
 % ^ Assigning our desired title prints above for frequency is João's solu-
@@ -426,7 +425,7 @@ end
 
 %% 5b - Calculate the Hilbert transform for each filtered LFP trace
 
-% We use the hilbert function to calculate the transform of our real input
+% We use the Hilbert function to calculate the transform of our real input
 % to a complext result of the same length. (useful for phases later)
 y = hilbert(x); % We do this for the entire dataset, this is not asked 
                 % by the exercise, but own interest demands it 8-).
@@ -456,7 +455,6 @@ for plotId = 1 : 4
    title(title_hil(plotId)); % Same usage of iterating over the 1x4 string.
    legend('real element', 'imaginary element');
 end
-
 
 %% 5c - Calculate the instantaneous phase for the Hilbert transform.
 

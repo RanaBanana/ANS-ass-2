@@ -289,9 +289,9 @@ ylabel('Average LFP signal (µV)');
 % that range of Hz.
 
 %% 5a - Use an IIR filter to divide the LFP into these three frequency ranges.
-clear all;
-close all;
-load assignment2_data.mat;
+% clear all; - remove comment notation if data is missing or mismatched :)
+% close all; - Idem
+% load assignment2_data.mat; - Idem
 
 % Declare certain basic variables: frequency sampling, length of data etc
 % etc

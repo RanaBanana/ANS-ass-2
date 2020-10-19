@@ -279,83 +279,216 @@ xlabel('Time window around spikes (ms)');
 ylabel('Average LFP signal (µV)');
 
 %% exercise 5
+% Rough expectations of what is desired.
+% Consider the following 3 frequency ranges (2,6)Hz, (10, 20)Hz and (30,
+% 40)Hz
 
-%lmao fml
+% We need to evaluate: Spike Coherence in the ranges
+
+% Compute if AP's happen more in certain phases in the LFP oscillation of
+% that range of Hz.
+
+%% 5a - Use an IIR filter to divide the LFP into these three frequency ranges.
 clear all;
 close all;
 load assignment2_data.mat;
 
-% randomshit gestolen van slides/code/google/wanhoop
+% Declare certain basic variables: frequency sampling, length of data etc
+% etc
 Fs=1000;
-N = 20;
-x = lfp_data; %deze nog wel zelfbedacht :')
-t = 0:length(x)-1; %deze ook want ik ben te fragiel om 1:length(x) te doen.
+x = lfp_data; % So we have a simple var for our data
+t = 0:length(x)-1; % we count from zero okay >=(
 
-% Compute fourier transform
-nfft = length(lfp_data); % Ab
-f=(-nfft/2:nfft/2-1)*Fs/nfft; %ra 
-f_s= fftshift(f); %ca
-X = fft(x, nfft); %da
-%bruh
+% We want to set up a few measures first that are relevant for a fourier 
+% transform. Listed below are:
+nfft = length(lfp_data); % Simple answer: Number of relevant datapoints
+                         % Complex answer: Nfft is required to zero-pad our
+                         % time-domain vector before we calculate any
+                         % transformation (this makes it more efficiënt in
+                         % the long run).
+f=(-nfft/2:nfft/2-1)*Fs/nfft; % Specify our total range, multiplied by the
+                              % fraction of sampling freq over nfft.
+f_s= fftshift(f); % Neat way of shifting our spectrum's zero-frequency com-
+                  % ponent to the center of our array.
+X = fft(x, nfft); % Computes the -discrete Fourier transform- of our x values
+                  % with the fast Fourier transform algorithm. Mathworks
+                  % holds some interesting examples of how it works, if in-
+                  % terested!
 
-%Hier toen we 3x een filter voor de gewenste ranges
-filt_2_6 = zeros(size(X)); % allocaten ruimte voor size van X
-a=find(abs(f_s)>= 2 & abs(f_s) <= 6); % zoeken naar alle relevante waarden van f_s (freq)
-filt_2_6(a) = 1; % if present we adjust the values to 1 for later (dan heb je dus een hit van die freq range)
+% We create relevant filters for the requested ranges from our assignment.
+filt_2_6 = zeros(size(X)); % First we allocate space from our size of X.
+a=find(abs(f_s)>= 2 & abs(f_s) <= 6); % We use the find() function again
+                                      % to look for all points inbetween
+                                      % the specified values.
+filt_2_6(a) = 1; % Odd step at cursory glance, we assign 1 to "hits" so  
+                 % that during later element operation we can pull a nifty
+                 % trick (see line 57).
 
-filt_10_20 = zeros(size(X)); % idem
-b=find(abs(f_s)>= 10 & abs(f_s) <= 20); %diedum
-filt_10_20(b) = 1; %riedum
+filt_10_20 = zeros(size(X)); % We repeat these steps twice below. 
+b=find(abs(f_s)>= 10 & abs(f_s) <= 20); % -Same logic-
+filt_10_20(b) = 1; % -Same logic- 
 
-filt_30_40 = zeros(size(X)); %smiedum
-c=find(abs(f_s)>= 30 & abs(f_s) <= 40); %geenrijmmeerdum
-filt_30_40(c) = 1; % tsja, de comments zijn mager
+filt_30_40 = zeros(size(X)); % -Same logic-
+c=find(abs(f_s)>= 30 & abs(f_s) <= 40); % -Same logic-
+filt_30_40(c) = 1; % -Same logic-
 
-X_f1 = X.*filt_2_6; %magical shit van onze filter voorwaarden(?) met onze x punten
-X_ff1 =ifft(X_f1, nfft); %inverse fast fourier transform (ik pretendeer later wel te weten wat het is) over de 2 waarden
-X_f2 = X.*filt_10_20;
-X_ff2 =ifft(X_f2, nfft);
-X_f3 = X.*filt_30_40;
-X_ff3 =ifft(X_f3, nfft);
+X_f1 = X.*filt_2_6; % This was the nifty trick (Nick's imo, don't judge my
+                    % group if it's lame). We want to multiply all relevant
+                    % datapoints our filter with our Fourier transformed
+                    % data: X. We use the .* application to multiply
+                    % element wise through all data, because we assigned a
+                    % 1 earlier, we only retain any points of relevance.
+                    % (I suspect there is a cleaner method to this, as this
+                    % does require an extra iteration of N calculations,
+                    % but I couldn't come up with one in a reasonable
+                    % timeframe.)
+X_ff1 =ifft(X_f1, nfft); % We do an inverse fast Fourier transform to convert
+                         % all data from our frequency domain to a time do-
+                         % main. (if our signal is non-periodic, the resul-
+                         % ting frequency spectrum will start to affected
+                         % by leakage).
+X_f2 = X.*filt_10_20; % Here we repeat the two steps above twice again.
+X_ff2 =ifft(X_f2, nfft); % -Same logic-
+X_f3 = X.*filt_30_40; % -Same logic-
+X_ff3 =ifft(X_f3, nfft); % -Same logic-
+Total_X_ff = {X_ff1 X_ff2 X_ff3}; % -Same logic
 
-%plot tijd en kijken of poging nfft^length(lfp_data) wel werkt :') 
+Freq = ["LFP 2 to 6Hz filtered", "LFP 10 to 20Hz filtered", "LFP 30 to 40Hz filtered"];
+% ^ Assigning our desired title prints above for frequency is João's solu-
+% tion, so credit goes to him! This variable will be used in the for-loop 
+% below.
+
+figure() ; % Call on a figure()
+for plotId = 1 : 3 % We'll run it 3 times, as we desire 3 plots.
+   subplot(3, 1, plotId) ; % Shift it with 1, per iteration (so we don't   
+                           % create unnecessary overlap).
+   plot(t(1:nfft), Total_X_ff{:, plotId}); % Plot for a range of 2000 points
+                           % This value was chosen so the pattern is
+                           % clearly shown to be repeating. 
+   ylabel('mV');
+   xlabel('datapoints');
+   title(Freq(plotId)); % Here we call upon our Freq title variable with
+                        % shifting position of (plotId).
+end
+
+%% 5b - Calculate the Hilbert transform for each filtered LFP trace
+
+% We use the hilbert function to calculate the transform of our real input
+% to a complext result of the same length. (useful for phases later)
+y = hilbert(x); % We do this for the entire dataset, this is not asked 
+                % by the exercise, but own interest demands it 8-).
+y1 = hilbert(X_ff1); % We also do the transform for 2-6hz filter.
+y2 = hilbert(X_ff2); % Same for the 10-20Hz variant.
+y3 = hilbert(X_ff3); % Same for the 30-40Hz variant.
+
+% We allocate a 1x4 cell for allowing a for-loop to iterate over the
+% values of the hilbert transformation. 
+y_tot = {y1 y2 y3 y};
+
+% We declare another 1x4 string for easy title labeling later.
+title_hil = ["Hilbert transform for 2 to 6Hz", "Hilbert transform for 10 to 20Hz", "Hilbert transform for 30 to 40Hz", "Hilbert transform for all Hz"];
+    
+figure() ; % Same method as used in exercise 5a, comments will be left out 
+           % if the explanation is identical/similar enough as in 5a.
+for plotId = 1 : 4
+   subplot(4, 1, plotId) ;
+   plot(t(1:2000), real(y_tot{:, plotId}(1:2000))); % We now plot over our 
+                                                    % indexed cell struc-
+                                                    % ture.
+   hold on % Usage of hold on/off for overlapping the real-imag plots.
+   plot(t(1:2000), imag(y_tot{:, plotId}(1:2000))); 
+   hold off
+   xlabel('Timeframe (ms)');
+   ylabel('amplitude');
+   title(title_hil(plotId)); % Same usage of iterating over the 1x4 string.
+   legend('real element', 'imaginary element');
+end
+
+
+%% 5c - Calculate the instantaneous phase for the Hilbert transform.
+
+% Declaring a 1x4 string again for later title usage.
+title_phase = ["Hilbert phaseshift for 2 to 6Hz", "Hilbert phaseshift for 10 to 20Hz", "Hilbert phaseshift for 30 to 40Hz", "Hilbert phaseshift for original signal"];
+
+% Same logic for this for-loop as the previous two. Only difference is 
+% usage of angle() in the real-imag arguments. This way we get the rele-
+% vant angle of all data relevant between specified filters.
+figure() ;
+for plotId = 1 : 4
+   subplot(4, 1, plotId) ;
+   plot(t(1:2000), real(angle(y_tot{:, plotId}(1:2000))));
+   hold on
+   plot(t(1:2000), imag(angle(y_tot{:, plotId}(1:2000))));
+   hold off
+   xlabel('Timeframe (ms)');
+   ylabel('phase of angle');
+   title(title_phase(plotId));
+   legend('real element', 'imaginary element');
+end
+
+%% 5d & e - Per frequency range, plot a circular histogram of phases of spike time.
+
+% Call upon three arguments below, as in exercise 1. Personally I just add
+% these in case TA's review the exercises split seperately. 
+events_table = table(events_ts, events_type);
+onTimes = events_table.events_ts(events_type==1);
+offTimes = events_table.events_ts(events_type==31);
+
+% for-loop used to iterate over the length of stimuli. 
+for k = 1:length(onTimes)
+    % We assign any values relevant during stimulus presentation to "hit".
+    hit = find(spikes_ts >= onTimes(k) & spikes_ts < offTimes(k));
+    % Allocate to loc_sp any values of that position.
+    loc_sp = spikes_ts(hit);
+    % We create a m x n, of column (k) and rows of length(loc_sp).
+    sp_dur_stim(k, 1:length(loc_sp)) = loc_sp;
+end
+
+remove_zero_sp = sp_dur_stim ~= 0; % remove any zero values left from our 
+                                   % for-loop.
+tryout = sp_dur_stim(remove_zero_sp)'; % Apply the removed zero's comparison
+                                       % to our original m x n. Transpose
+                                       % at the end for easier use later. 
+
+% -Same logic as in 5a/b: Applies from line 174:200- Function calling would
+% be useful in my opinion, but wasn't needed according to the teachers.
+nfft2 = length(tryout); 
+f1=(-nfft2/2:nfft2/2-1)*Fs/nfft2; 
+f_s1= fftshift(f1); 
+
+SDS = fft(tryout, nfft2); 
+filt2_6 = zeros(size(SDS));  
+a=find(abs(f_s1)>= 2 & abs(f_s1) <= 6);  
+filt2_6(a) = 1; 
+
+filt10_20 = zeros(size(SDS));
+b=find(abs(f_s1)>= 10 & abs(f_s1) <= 20); 
+filt10_20(b) = 1; 
+
+filt30_40 = zeros(size(SDS)); 
+c=find(abs(f_s1)>= 30 & abs(f_s1) <= 40); 
+filt30_40(c) = 1; 
+
+SDS2_6 = SDS.*filt2_6;
+SDS1 = ifft(SDS2_6, nfft2);
+SDS10_20 = SDS.*filt10_20;
+SDS2 = ifft(SDS10_20, nfft2);
+SDS30_40 = SDS.*filt30_40;
+SDS3 = ifft(SDS30_40, nfft2);
+
+ya1 = hilbert(SDS1);
+ya2 = hilbert(SDS2);
+ya3 = hilbert(SDS3);
+
+% Simple plotting without the use for a for-loop, as the length of the con-
+% struct doesn't get obscene here. Note the same usage of angle() as in 5c.
 figure;
-figfor2_6 = subplot(311);
-plot(t(1:nfft), X_ff1);
-ylim(figfor2_6, [-5000 5000]);
-ylabel('mV');
-xlabel('datapoints');
-title('LFP 2 to 6 Hz filtered');
-
-figfor10_20 = subplot(312);
-plot(t(1:nfft), X_ff2);
-ylim(figfor10_20, [-5000 5000]);
-ylabel('mV');
-xlabel('datapoints');
-title('LFP 10 to 20 Hz filtered');
-
-figfor30_40 = subplot(313);
-plot(t(1:nfft), X_ff3);
-ylim(figfor30_40, [-2000 2000]);
-ylabel('mV');
-xlabel('datapoints');
-title('LFP 30 to 40 Hz filtered');
-% courtesy of Rana https://gyazo.com/806acc8c7477862103ae523c9845507b
-
-
-
-% Just kidding it was okay, it just feel wrong to have done it with just
-% restructering copied code from slides but hey. 
-
-
-
-
-
-
-
-
-
-
-
-
-
+subplot(131);
+polarhistogram(angle(ya1), 24);
+title('Angle phases of spikes of 2 to 6Hz range during stimulus');
+subplot(132);
+polarhistogram(angle(ya2), 24);
+title('Angle phases of spikes of 10 to 20Hz range during stimulus');
+subplot(133);
+polarhistogram(angle(ya3), 24);
+title('Angle phases of spikes of 30 to 40Hz range during stimulus');

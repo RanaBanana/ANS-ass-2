@@ -228,6 +228,17 @@ range2_bas = mean_bas_P(stim_F>100 & stim_F<=245);
 %           zval: 10.4462
 %     signedrank: 10585
 
+% Descriptive statistics
+    % Median
+range1_stim_med = median(range1_stim); % median = 2.0055e+03
+range1_bas_med = median(range1_bas); % median = 336.7476
+range2_stim_med = median(range2_stim); % median = 213.8744
+range2_bas_med = median(range2_bas); % median = 49.8733
+    % IQR
+range1_stim_IQR = iqr(range1_stim); % IQR = 6.1212e+03
+range1_bas_IQR = iqr(range1_bas); % IQR = 685.6326
+range2_stim_IQR = iqr(range2_stim); % IQR = 115.9692
+range2_bas_IQR = iqr(range2_bas); % IQR = 33.4150
 
 %% Exercise 4
 % Exercise 4
@@ -375,7 +386,7 @@ a=find(abs(f_s)>= 2 & abs(f_s) <= 6); % We use the find() function again
                                       % the specified values.
 filt_2_6(a) = 1; % Odd step at cursory glance, we assign 1 to "hits" (a) so  
                  % that during later element operation we can pull a nifty
-                 % trick (see line 388).
+                 % trick (see line 399).
 
 filt_10_20 = zeros(size(X)); % We repeat these steps twice below. 
 b=find(abs(f_s)>= 10 & abs(f_s) <= 20);
@@ -502,7 +513,7 @@ tryout = sp_dur_stim(remove_zero_sp)'; % Apply the removed zero's comparison
                                        % to our original m x n. Transpose
                                        % at the end for easier use later. 
 
-% -Same logic as in 5a/b: Applies to line 507:538- Function calling would
+% -Same logic as in 5a/b: Applies to line 518:548- Function calling would
 % be useful in my opinion, but wasn't needed according to the teachers.
 nfft2 = length(tryout); 
 f1=(-nfft2/2:nfft2/2-1)*Fs/nfft2; 

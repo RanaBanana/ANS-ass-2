@@ -110,9 +110,10 @@ bas_P = zeros(length(onTimes),501);
 % Next, this for-loop takes the index for the wanted timestamps, which
 % corresponds to the index in lfp_data. The power and frequency values of 
 % the wanted values in lfp_data are calculated using the pwelch() function.
-% The power and frequency values are then cast into the matrix that was made
-% before(stim_P or bas_P)for both the stimulus presentation and baseline 
-% periods. 
+% The power values are then cast into the matrix that was made
+% before (stim_P or bas_P) for both the stimulus presentation and baseline 
+% periods. stim_F and bas_F are the same for every iteration, so no matrix
+% is needed for these variables.
 for i = 1:length(onTimes)
     [~,stim_begin_idx] = min(abs(lfp_ts - onTimes(i)));
     [~,stim_end_idx] = min(abs(lfp_ts - offTimes(i)));
